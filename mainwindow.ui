@@ -63,7 +63,7 @@
      <string>Goles a favor y en contra</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="equipoMasGolesButton">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -89,7 +89,7 @@
      <string>Promedio de goles a favor y encontra</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_4">
+   <widget class="QPushButton" name="victoriasDerrotasButton">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -102,7 +102,7 @@
      <string>Victorias y derrotas por equipo en competicion</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_5">
+   <widget class="QPushButton" name="fechaGolesButton">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -151,7 +151,7 @@
      <string>5 partidos con mas cantidad de goles</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_7">
+   <widget class="QPushButton" name="equipoMenosGolesButton">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -182,12 +182,12 @@
   <tabstop>editButton</tabstop>
   <tabstop>deleteButton</tabstop>
   <tabstop>golesTotalesButton</tabstop>
-  <tabstop>pushButton_2</tabstop>
+  <tabstop>equipoMasGolesButton</tabstop>
   <tabstop>promedioGolesButton</tabstop>
-  <tabstop>pushButton_4</tabstop>
-  <tabstop>pushButton_5</tabstop>
+  <tabstop>victoriasDerrotasButton</tabstop>
+  <tabstop>fechaGolesButton</tabstop>
   <tabstop>listWidget</tabstop>
-  <tabstop>pushButton_7</tabstop>
+  <tabstop>equipoMenosGolesButton</tabstop>
  </tabstops>
  <resources/>
  <connections/>

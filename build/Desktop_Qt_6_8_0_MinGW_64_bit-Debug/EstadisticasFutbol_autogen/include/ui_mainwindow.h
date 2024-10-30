@@ -28,12 +28,12 @@ public:
     QPushButton *editButton;
     QPushButton *deleteButton;
     QPushButton *golesTotalesButton;
-    QPushButton *pushButton_2;
+    QPushButton *equipoMasGolesButton;
     QPushButton *promedioGolesButton;
-    QPushButton *pushButton_4;
-    QPushButton *pushButton_5;
+    QPushButton *victoriasDerrotasButton;
+    QPushButton *fechaGolesButton;
     QPushButton *top5Button;
-    QPushButton *pushButton_7;
+    QPushButton *equipoMenosGolesButton;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -56,18 +56,18 @@ public:
         golesTotalesButton = new QPushButton(centralwidget);
         golesTotalesButton->setObjectName("golesTotalesButton");
         golesTotalesButton->setGeometry(QRect(10, 90, 291, 41));
-        pushButton_2 = new QPushButton(centralwidget);
-        pushButton_2->setObjectName("pushButton_2");
-        pushButton_2->setGeometry(QRect(10, 320, 291, 51));
+        equipoMasGolesButton = new QPushButton(centralwidget);
+        equipoMasGolesButton->setObjectName("equipoMasGolesButton");
+        equipoMasGolesButton->setGeometry(QRect(10, 320, 291, 51));
         promedioGolesButton = new QPushButton(centralwidget);
         promedioGolesButton->setObjectName("promedioGolesButton");
         promedioGolesButton->setGeometry(QRect(10, 140, 291, 51));
-        pushButton_4 = new QPushButton(centralwidget);
-        pushButton_4->setObjectName("pushButton_4");
-        pushButton_4->setGeometry(QRect(10, 200, 291, 51));
-        pushButton_5 = new QPushButton(centralwidget);
-        pushButton_5->setObjectName("pushButton_5");
-        pushButton_5->setGeometry(QRect(10, 260, 291, 51));
+        victoriasDerrotasButton = new QPushButton(centralwidget);
+        victoriasDerrotasButton->setObjectName("victoriasDerrotasButton");
+        victoriasDerrotasButton->setGeometry(QRect(10, 200, 291, 51));
+        fechaGolesButton = new QPushButton(centralwidget);
+        fechaGolesButton->setObjectName("fechaGolesButton");
+        fechaGolesButton->setGeometry(QRect(10, 260, 291, 51));
         top5Button = new QPushButton(centralwidget);
         top5Button->setObjectName("top5Button");
         top5Button->setGeometry(QRect(10, 40, 291, 41));
@@ -81,9 +81,9 @@ public:
         QFont font;
         font.setHintingPreference(QFont::PreferFullHinting);
         top5Button->setFont(font);
-        pushButton_7 = new QPushButton(centralwidget);
-        pushButton_7->setObjectName("pushButton_7");
-        pushButton_7->setGeometry(QRect(10, 380, 291, 51));
+        equipoMenosGolesButton = new QPushButton(centralwidget);
+        equipoMenosGolesButton->setObjectName("equipoMenosGolesButton");
+        equipoMenosGolesButton->setGeometry(QRect(10, 380, 291, 51));
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
@@ -95,12 +95,12 @@ public:
         QWidget::setTabOrder(top5Button, editButton);
         QWidget::setTabOrder(editButton, deleteButton);
         QWidget::setTabOrder(deleteButton, golesTotalesButton);
-        QWidget::setTabOrder(golesTotalesButton, pushButton_2);
-        QWidget::setTabOrder(pushButton_2, promedioGolesButton);
-        QWidget::setTabOrder(promedioGolesButton, pushButton_4);
-        QWidget::setTabOrder(pushButton_4, pushButton_5);
-        QWidget::setTabOrder(pushButton_5, listWidget);
-        QWidget::setTabOrder(listWidget, pushButton_7);
+        QWidget::setTabOrder(golesTotalesButton, equipoMasGolesButton);
+        QWidget::setTabOrder(equipoMasGolesButton, promedioGolesButton);
+        QWidget::setTabOrder(promedioGolesButton, victoriasDerrotasButton);
+        QWidget::setTabOrder(victoriasDerrotasButton, fechaGolesButton);
+        QWidget::setTabOrder(fechaGolesButton, listWidget);
+        QWidget::setTabOrder(listWidget, equipoMenosGolesButton);
 
         retranslateUi(MainWindow);
 
@@ -113,12 +113,12 @@ public:
         editButton->setText(QCoreApplication::translate("MainWindow", "Editar Partido", nullptr));
         deleteButton->setText(QCoreApplication::translate("MainWindow", "Eliminar Partido", nullptr));
         golesTotalesButton->setText(QCoreApplication::translate("MainWindow", "Goles a favor y en contra", nullptr));
-        pushButton_2->setText(QCoreApplication::translate("MainWindow", "El equipo con m\303\241s goles en todas las competiciones", nullptr));
+        equipoMasGolesButton->setText(QCoreApplication::translate("MainWindow", "El equipo con m\303\241s goles en todas las competiciones", nullptr));
         promedioGolesButton->setText(QCoreApplication::translate("MainWindow", "Promedio de goles a favor y encontra", nullptr));
-        pushButton_4->setText(QCoreApplication::translate("MainWindow", "Victorias y derrotas por equipo en competicion", nullptr));
-        pushButton_5->setText(QCoreApplication::translate("MainWindow", "Fecha con mas y menos goles de un equipo", nullptr));
+        victoriasDerrotasButton->setText(QCoreApplication::translate("MainWindow", "Victorias y derrotas por equipo en competicion", nullptr));
+        fechaGolesButton->setText(QCoreApplication::translate("MainWindow", "Fecha con mas y menos goles de un equipo", nullptr));
         top5Button->setText(QCoreApplication::translate("MainWindow", "5 partidos con mas cantidad de goles", nullptr));
-        pushButton_7->setText(QCoreApplication::translate("MainWindow", "Equipo con menos goles en todas las competiciones", nullptr));
+        equipoMenosGolesButton->setText(QCoreApplication::translate("MainWindow", "Equipo con menos goles en todas las competiciones", nullptr));
     } // retranslateUi
 
 };

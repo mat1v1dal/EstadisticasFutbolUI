@@ -27,6 +27,18 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->promedioGolesButton, &QPushButton::clicked, this, [this]() {
         mostrarPromedioGolesPorEquipo(servicioPartido);
     });
+    connect(ui->victoriasDerrotasButton, &QPushButton::clicked, this, [this]() {
+        mostrarVictoriasYDerrotasPorCompeticion(servicioPartido);
+    });
+    connect(ui->fechaGolesButton, &QPushButton::clicked, this, [this]() {
+        mostrarFechaConMasYMenosGoles(servicioPartido);
+    });
+    connect(ui->equipoMasGolesButton, &QPushButton::clicked, this, [this]() {
+        equipoConMasGolesEnTodasLasCompeticiones(servicioPartido);
+    });
+    connect(ui->equipoMenosGolesButton, &QPushButton::clicked, this, [this]() {
+        equipoConMenosGolesEnTodasLasCompeticiones(servicioPartido);
+    });
     ui->editButton->setEnabled(false);
     ui->deleteButton->setEnabled(false);
 
@@ -321,6 +333,164 @@ void MainWindow::mostrarPromedioGolesPorEquipo(ServicioPartidoTree& servicio) {
 
     // Mostrar el tiempo de ejecución
     QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+}
+
+void MainWindow::mostrarVictoriasYDerrotasPorCompeticion(ServicioPartidoTree& servicio) {
+    // Solicitar el nombre del equipo al usuario
+    bool ok;
+    QString equipoNombre = QInputDialog::getText(this, "Ingrese Nombre del Equipo", "Equipo:", QLineEdit::Normal, "", &ok);
+
+    if (!ok || equipoNombre.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No se ingresó ningún equipo.");
+        return;
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration;
+    try {
+        bool equipoEncontrado = false;
+        QString resultados;
+
+        // Buscar el equipo en todas las competiciones
+        for (const auto& [competicion, equiposEnCompeticion] : servicio.getEquipos()) {
+            auto it = equiposEnCompeticion.find(equipoNombre.toStdString());
+            if (it != equiposEnCompeticion.end()) {
+                equipoEncontrado = true;
+                const Equipo& equipo = it->second;
+                Estadisticas stats = equipo.getEstadisticas(competicion);
+
+                resultados += QString("Competición: %1\nEquipo: %2\nVictorias: %3\nDerrotas: %4\n\n")
+                                  .arg(QString::fromStdString(competicion))
+                                  .arg(QString::fromStdString(equipo.getNombre()))
+                                  .arg(stats.victorias)
+                                  .arg(stats.derrotas);
+            }
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        duration = end - start;
+        if (!equipoEncontrado) {
+            QMessageBox::information(this, "Equipo no encontrado", "El equipo no fue encontrado en ninguna competición.");
+        } else {
+            // Mostrar los resultados en un cuadro de mensaje
+            QMessageBox::information(this, "Victorias y Derrotas por Competición", resultados);
+        }
+    } catch (...) {
+        QMessageBox::warning(this, "Error", "No se pudo recuperar el equipo.");
+    }
+
+
+
+    // Mostrar el tiempo de ejecución
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+}
+
+
+void MainWindow::mostrarFechaConMasYMenosGoles(ServicioPartidoTree& servicio) {
+    // Solicitar la competición
+    bool ok;
+    QString competicion = QInputDialog::getText(this, "Ingrese la Competición", "Competición:", QLineEdit::Normal, "", &ok);
+    if (!ok || competicion.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No se ingresó ninguna competición.");
+        return;
+    }
+
+    // Solicitar el nombre del equipo
+    QString equipoNombre = QInputDialog::getText(this, "Ingrese Nombre del Equipo", "Equipo:", QLineEdit::Normal, "", &ok);
+    if (!ok || equipoNombre.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No se ingresó ningún equipo.");
+        return;
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration;
+    try {
+        // Obtener el partido con la fecha con más goles
+        Partido partidoMasGoles = servicio.getFechaConMasGoles(equipoNombre.toStdString(), competicion.toStdString());
+        QString resultadoMasGoles = QString("Fecha con más goles:\nEquipo Local: %1\nEquipo Visitante: %2\nGoles: %3 - %4\nFecha: %5\n\n")
+                                        .arg(QString::fromStdString(partidoMasGoles.getEquipoLocal()))
+                                        .arg(QString::fromStdString(partidoMasGoles.getEquipoVisitante()))
+                                        .arg(partidoMasGoles.getGolesLocal())
+                                        .arg(partidoMasGoles.getGolesVisitante())
+                                        .arg(QString::fromStdString(partidoMasGoles.getFecha().toString()));
+
+        // Obtener el partido con la fecha con menos goles
+        Partido partidoMenosGoles = servicio.getFechaConMenosGoles(equipoNombre.toStdString(), competicion.toStdString());
+        QString resultadoMenosGoles = QString("Fecha con menos goles:\nEquipo Local: %1\nEquipo Visitante: %2\nGoles: %3 - %4\nFecha: %5\n\n")
+                                          .arg(QString::fromStdString(partidoMenosGoles.getEquipoLocal()))
+                                          .arg(QString::fromStdString(partidoMenosGoles.getEquipoVisitante()))
+                                          .arg(partidoMenosGoles.getGolesLocal())
+                                          .arg(partidoMenosGoles.getGolesVisitante())
+                                          .arg(QString::fromStdString(partidoMenosGoles.getFecha().toString()));
+        auto end = std::chrono::high_resolution_clock::now();
+        duration = end - start;
+        // Mostrar los resultados en un QMessageBox
+        QMessageBox::information(this, "Resultados", resultadoMasGoles + "\n" + resultadoMenosGoles);
+    } catch (...) {
+        QMessageBox::warning(this, "Error", "No se pudo recuperar la competición o el equipo.");
+    }
+
+
+
+    // Mostrar el tiempo de ejecución
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+}
+
+void MainWindow::equipoConMasGolesEnTodasLasCompeticiones(ServicioPartidoTree& servicio) {
+    auto start = std::chrono::high_resolution_clock::now();  // Inicio del cronómetro
+
+    // Obtener goles por equipo de todas las competiciones
+    std::map<std::string, int> golesPorEquipo = servicio.getGolesPorEquipo();
+
+    // Determinar el equipo con el mayor número de goles
+    std::string equipoMasGoles;
+    int maxGoles = 0;
+    for (const auto& [equipo, goles] : golesPorEquipo) {
+        if (goles > maxGoles) {
+            maxGoles = goles;
+            equipoMasGoles = equipo;
+        }
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();  // Fin del cronómetro
+    std::chrono::duration<double> duration = end - start;
+
+    // Preparar el mensaje para mostrar los resultados
+    QString resultado = QString("El equipo con más goles en todas las competiciones es: %1 con %2 goles.")
+                            .arg(QString::fromStdString(equipoMasGoles))
+                            .arg(maxGoles);
+
+    // Mostrar el tiempo transcurrido y los resultados en un QMessageBox
+    resultado += QString("\n\nTiempo transcurrido: %1 segundos").arg(duration.count());
+    QMessageBox::information(this, "Resultados", resultado);
+}
+
+void MainWindow::equipoConMenosGolesEnTodasLasCompeticiones(ServicioPartidoTree& servicio) {
+    auto start = std::chrono::high_resolution_clock::now();  // Inicio del cronómetro
+    std::chrono::duration<double> duration;
+    // Obtener goles por equipo de todas las competiciones
+    std::map<std::string, int> golesPorEquipo = servicio.getGolesPorEquipo();
+
+    // Determinar el equipo con el menor número de goles
+    std::string equipoMenosGoles;
+    int minGoles = std::numeric_limits<int>::max();  // Inicializamos minGoles con el valor máximo posible para int
+    for (const auto& [equipo, goles] : golesPorEquipo) {
+        if (goles < minGoles) {
+            minGoles = goles;
+            equipoMenosGoles = equipo;
+        }
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();  // Fin del cronómetro
+    duration = end - start;
+
+    // Preparar el mensaje para mostrar los resultados
+    QString resultado = QString("El equipo con menos goles en todas las competiciones es: %1 con %2 goles.")
+                            .arg(QString::fromStdString(equipoMenosGoles))
+                            .arg(minGoles);
+
+    // Mostrar el tiempo transcurrido y los resultados en un QMessageBox
+    resultado += QString("\n\nTiempo transcurrido: %1 segundos").arg(duration.count());
+    QMessageBox::information(this, "Resultados", resultado);
 }
 
 MainWindow::~MainWindow()

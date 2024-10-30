@@ -33,5 +33,9 @@ private:
     void mostrarTop5Partidos(ServicioPartidoTree& servicio);
     void mostrarGolesTotalesPorEquipo(ServicioPartidoTree& servicio);
     void mostrarPromedioGolesPorEquipo(ServicioPartidoTree& servicio);
+    void mostrarVictoriasYDerrotasPorCompeticion(ServicioPartidoTree& servicio);
+    void mostrarFechaConMasYMenosGoles(ServicioPartidoTree& servicio);
+    void equipoConMasGolesEnTodasLasCompeticiones(ServicioPartidoTree& servicio);
+    void equipoConMenosGolesEnTodasLasCompeticiones(ServicioPartidoTree& servicio);
 };
 #endif // MAINWINDOW_H
