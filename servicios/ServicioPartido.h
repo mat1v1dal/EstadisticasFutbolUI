@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <map>
+#include <utility>
 #include <vector>
 #include "../lib/ArbolBinarioAVL.h"
 #include <iostream>
@@ -15,15 +16,19 @@ class ServicioPartidoTree {
 private:
     std::unordered_map<std::string, ArbolBinarioAVL<Partido>> competiciones;
     std::unordered_map<std::string, std::unordered_map<std::string, Equipo>> equipos;
-    std::map<std::string, int> golesPorEquipo;
 public:
     ServicioPartidoTree() {
     }
 
+
     void actualizarPartido(const std::string &liga, Partido& partido, Partido& partidoOriginal){
-        auto it = competiciones.find(liga);
-        if (it == competiciones.end()) throw std::runtime_error("No se encontro el partido");
-        it->second.search(partidoOriginal).setAll(partido.getEquipoLocalObj(), partido.getEquipoVisitanteObj(), partido.getGolesLocal(), partido.getGolesVisitante(), partido.getLiga(), partido.getFecha(), partido.getJornada());
+        try {
+            ArbolBinarioAVL<Partido>& arbolPartidos = competiciones.at(liga);
+            arbolPartidos.remove(partidoOriginal);
+            arbolPartidos.put(partido);
+        } catch (const std::out_of_range&) {
+            throw std::runtime_error("No se encontraron partidos para la competición.");
+        }
     }
 
     Partido getFechaConMenosGoles(const std::string& equipoNombre, const std::string& competicion) {
@@ -69,7 +74,11 @@ public:
         Equipo& equipoLocal = equipos[liga][partido.getEquipoLocal()];
 
         equipoLocal.aumentarGolesAFavor(liga, partido.getGolesLocal());
+
+
         equipoLocal.aumentarGolesEnContra(liga, partido.getGolesVisitante());
+
+
         equipoLocal.aumentarPartidosJugados(liga);
         if(partido.getGolesLocal() > partido.getGolesVisitante()){
             equipoLocal.registrarVictoria(liga);
@@ -80,12 +89,14 @@ public:
         Equipo& equipoVisitante = equipos[liga][partido.getEquipoVisitante()];
 
         equipoVisitante.aumentarGolesAFavor(liga, partido.getGolesVisitante());
+
         equipoVisitante.aumentarGolesEnContra(liga, partido.getGolesLocal());
+
         equipoVisitante.aumentarPartidosJugados(liga);
     }
 
 
-    void registrarPartidoEnHash(const Partido& partido) {
+    void registrarPartidoEnHash(Partido& partido) {
         std::string key = partido.getLiga();
 
         // Acceder directamente al árbol AVL de la competición
@@ -99,11 +110,10 @@ public:
         int golesLocal = partido.getGolesLocal();
         int golesVisitante = partido.getGolesVisitante();
 
-        partido.getEquipoLocalObj().aumentarGolesAFavor(golesLocal);
-        partido.getEquipoLocalObj().aumentarGolesEnContra(golesVisitante);
+        partido.aumentarGolesLocal(golesLocal);
 
-        partido.getEquipoVisitanteObj().aumentarGolesAFavor(golesVisitante);
-        partido.getEquipoVisitanteObj().aumentarGolesEnContra(golesLocal);
+        partido.aumentarGolesVisitante(golesVisitante);
+
     }
     const std::unordered_map<std::string, std::unordered_map<std::string, Equipo>>& getEquipos() const {
         return equipos;
@@ -124,17 +134,40 @@ public:
         }
     }
 
-    void registrarGolesPorEquipo(){
-        for(const auto& [competicion, equiposEnCompeticion] : equipos){
-            for(const auto& [nombre, equipo] : equiposEnCompeticion){
-                golesPorEquipo[equipo.getNombre()] = equipo.getGolesAFavor();
+    std::pair<Equipo, int> obtenerEquipoConMasGoles() const {
+        std::unordered_map<std::string, int> golesPorEquipo;
+        Equipo equipoConMasGoles;
+        int maxGoles = 0;
+
+        for (const auto& [competicion, equiposEnCompeticion] : equipos) {
+            for (const auto& [nombreEquipo, equipo] : equiposEnCompeticion) {
+                Estadisticas stats = equipo.getEstadisticas(competicion);
+                golesPorEquipo[nombreEquipo] += stats.golesAFavor;
+
+                if (golesPorEquipo[nombreEquipo] > maxGoles) {
+                    maxGoles = golesPorEquipo[nombreEquipo];
+                    equipoConMasGoles = equipo;
+                }
             }
         }
+
+        return {equipoConMasGoles, maxGoles}; // Retornamos el equipo y sus goles totales
     }
 
-    std::map<std::string, int> getGolesPorEquipo(){
-        return golesPorEquipo;
+    std::vector<Partido> obtenerPartidosEntreEquipos(const std::string& equipo1, const std::string& equipo2) {
+        std::vector<Partido> partidosEntreEquipos;
+        for (auto& [competicion, arbolPartidos] : competiciones) {
+            std::vector<Partido> partidos = arbolPartidos.inorder();
+            for (const auto& partido : partidos) {
+                if ((partido.getEquipoLocal() == equipo1 && partido.getEquipoVisitante() == equipo2) ||
+                    (partido.getEquipoLocal() == equipo2 && partido.getEquipoVisitante() == equipo1)) {
+                    partidosEntreEquipos.push_back(partido);
+                }
+            }
+        }
+        return partidosEntreEquipos;
     }
+
 };
 
 #endif

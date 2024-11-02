@@ -2,7 +2,7 @@
 #define EQUIPO_H
 #include <string>
 #include <unordered_map>
-#include "../lib/Arbol/ArbolBinarioAVL.h"
+#include "../lib/ArbolBinarioAVL.h"
 
 class Partido;
 
@@ -22,13 +22,13 @@ private:
     int empates;
     int victorias;
     int derrotas;
-    int golesAFavor = 0;
-    int golesEnContra = 0;
+    int golesAFavorTotales = 0;
+    int golesEnContraTotales = 0;
     float promedioGoles;
     std::unordered_map<std::string, Estadisticas> estadisticasPorCompeticion;
 public:
-    Equipo() : nombre(""), victorias(0), derrotas(0), empates(0), partidosJugados(0), golesAFavor(0), golesEnContra(0), promedioGoles(0) {}
-    Equipo(const std::string& nombre) : nombre(nombre), victorias(0), derrotas(0), empates(0), partidosJugados(0), golesAFavor(0), golesEnContra(0), promedioGoles(0) {}
+    Equipo() : nombre(""), victorias(0), derrotas(0), empates(0), partidosJugados(0), golesAFavorTotales(0), golesEnContraTotales(0), promedioGoles(0) {}
+    Equipo(const std::string& nombre) : nombre(nombre), victorias(0), derrotas(0), empates(0), partidosJugados(0), golesAFavorTotales(0), golesEnContraTotales(0), promedioGoles(0) {}
     Equipo(const std::string& nombre, int partidosJugados, int empates, int victorias, int derrotas)
         : nombre(nombre),
         partidosJugados(partidosJugados),
@@ -48,10 +48,10 @@ public:
     };
 
     int getGolesAFavor() const{
-        return golesAFavor;
+        return golesAFavorTotales;
     };
     int getGolesEnContra() const{
-        return golesEnContra;
+        return golesEnContraTotales;
     };
     void registrarVictoria(const std::string& competicion) {
         estadisticasPorCompeticion[competicion].victorias += 1;
@@ -67,11 +67,11 @@ public:
         empates++;
         partidosJugados++;
     };
-    void aumentarGolesAFavor(int cantidad){
-        golesAFavor += cantidad;
+    void aumentarGolesAFavorTotales(int cantidad){
+        golesAFavorTotales += cantidad;
     };
-    void aumentarGolesEnContra(int cantidad){
-        golesEnContra += cantidad;
+    void aumentarGolesEnContraTotales(int cantidad){
+        golesEnContraTotales += cantidad;
     };
     void aumentarGolesAFavor(const std::string& competicion, int cantidad) {
         estadisticasPorCompeticion[competicion].golesAFavor += cantidad;
@@ -91,12 +91,15 @@ public:
             throw std::runtime_error("No hay estadísticas para la competición especificada.");
         }
     }
+    const std::unordered_map<std::string, Estadisticas>& getEstadisticasPorCompeticion() const {
+        return estadisticasPorCompeticion;
+    }
     // Métodos para cálculos adicionales
     float obtenerPromedioGolesAFavor() const {
-        return golesAFavor / partidosJugados;
+        return golesAFavorTotales / partidosJugados;
     };
     float obtenerPromedioGolesEnContra() const {
-        return golesEnContra / partidosJugados;
+        return golesEnContraTotales / partidosJugados;
     };
 };
 

@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include "../entidades/Partido.h"
+#include "../entidades/partido.h"
 #include <stdexcept>
 #include <iostream>
 

@@ -1,8 +1,9 @@
 #ifndef PARTIDO_H
 #define PARTIDO_H
+#include <qobject.h>
 #include <string>
-#include "../../../../OneDrive/Documentos/proyectoprogramacion3/equipo.h"
-#include "fecha.h"
+#include "./equipo.h"
+#include "./fecha.h"
 class Partido{
 public:
     Partido() : equipoLocal(Equipo("N/A")), equipoVisitante(Equipo("N/A")), golesLocal(0), golesVisitante(0), liga("N/A"), fecha(0,0,0)  {}
@@ -91,6 +92,13 @@ public:
             && equipoVisitante.getNombre() == partido.getEquipoVisitante();
     }
 
+    void aumentarGolesLocal(int goles){
+        this->equipoLocal.aumentarGolesAFavorTotales(goles);
+    }
+    void aumentarGolesVisitante(int goles){
+        this->equipoLocal.aumentarGolesAFavorTotales(goles);
+    }
+
     void setEquipoLocal(Equipo equipoLocal) {
         this->equipoLocal = equipoLocal;
     }
@@ -133,5 +141,6 @@ private:
     int golesVisitante;
     Fecha fecha;
 };
+Q_DECLARE_METATYPE(Partido);
 
 #endif

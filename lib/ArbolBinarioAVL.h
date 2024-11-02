@@ -14,7 +14,7 @@ public:
 
     void put(T data);
 
-    T search(T data);
+    T* search(T data);
 
     void remove(T data);
 
@@ -36,7 +36,7 @@ public:
     }
 
 private:
-    T search(T data, NodoArbolAVL<T> *r);
+    T* search(T data, NodoArbolAVL<T> *r);
     void preorder(NodoArbolAVL<T> *r, std::vector<T> &vec);
     void inorder(NodoArbolAVL<T> *r, std::vector<T> &vec);
     void postorder(NodoArbolAVL<T> *r, std::vector<T> &vec);
@@ -73,30 +73,23 @@ ArbolBinarioAVL<T>::~ArbolBinarioAVL() {}
  * @return el valor buscado
  */
 template <class T>
-T ArbolBinarioAVL<T>::search(T data)
-{
+T* ArbolBinarioAVL<T>::search(T data) {
     return search(data, root);
 }
 
 template <class T>
-T ArbolBinarioAVL<T>::search(T data, NodoArbolAVL<T> *r)
-{
-    if (r == nullptr)
-    {
-        throw 404;
+T* ArbolBinarioAVL<T>::search(T data, NodoArbolAVL<T>* r) {
+    if (r == nullptr) {
+        return nullptr; // No se encontró el nodo
     }
 
-    if (r->getData() == data)
-    {
-        return r->getData();
+    if (r->getData() == data) {
+        return &r->getData(); // Retorna un puntero al dato
     }
 
-    if (r->getData() > data)
-    {
+    if (r->getData() > data) {
         return search(data, r->getLeft());
-    }
-    else
-    {
+    } else {
         return search(data, r->getRight());
     }
 }

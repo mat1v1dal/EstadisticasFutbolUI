@@ -17,11 +17,12 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr);
-    std::string rutaArchivo = "../../data/datos.csv";
+    std::string rutaArchivo;
     ~MainWindow();
 
 private:
     Ui::MainWindow *ui;
+    void obtenerRutaArchivo();
     void obtenerPartidos(ServicioPartidoTree &servicio,const std::string &rutaArchivo);
     void actualizarVectorDePartidos(const std::string& rutaArchivo);
     ServicioPartidoTree servicioPartido;
@@ -37,5 +38,7 @@ private:
     void mostrarFechaConMasYMenosGoles(ServicioPartidoTree& servicio);
     void equipoConMasGolesEnTodasLasCompeticiones(ServicioPartidoTree& servicio);
     void equipoConMenosGolesEnTodasLasCompeticiones(ServicioPartidoTree& servicio);
+    void compararRendimientoEquipos(ServicioPartidoTree& servicio);
+    void resetWidget();
 };
 #endif // MAINWINDOW_H

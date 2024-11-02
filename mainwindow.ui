@@ -164,6 +164,32 @@
      <string>Equipo con menos goles en todas las competiciones</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="compararDosEquiposButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>440</y>
+      <width>291</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Comparar rendimiento entre dos equipos</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="reiniciarWidget">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>10</y>
+      <width>80</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reiniciar</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

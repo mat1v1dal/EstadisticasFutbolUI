@@ -377,7 +377,5 @@ C:/Users/matia/OneDrive/Documentos/EstadisticasFutbol/build/Desktop_Qt_6_8_0_Min
   C:/Users/matia/OneDrive/Documentos/EstadisticasFutbol/entidades/fecha.h \
   C:/Users/matia/OneDrive/Documentos/EstadisticasFutbol/entidades/partido.h \
   C:/Users/matia/OneDrive/Documentos/EstadisticasFutbol/lib/ArbolBinarioAVL.h \
-  C:/Users/matia/OneDrive/Documentos/EstadisticasFutbol/servicios/ServicioPartido.h \
-  C:/Users/matia/OneDrive/Documentos/proyectoprogramacion3/equipo.h \
-  C:/Users/matia/workspace/proyectoprogramacion3/src/lib/Arbol/ArbolBinarioAVL.h \
-  C:/Users/matia/workspace/proyectoprogramacion3/src/lib/Arbol/NodoArbolAVL.h
+  C:/Users/matia/OneDrive/Documentos/EstadisticasFutbol/lib/NodoArbolAVL.h \
+  C:/Users/matia/OneDrive/Documentos/EstadisticasFutbol/servicios/ServicioPartido.h
