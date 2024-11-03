@@ -16,11 +16,22 @@ class ServicioPartidoTree {
 private:
     std::unordered_map<std::string, ArbolBinarioAVL<Partido>> competiciones;
     std::unordered_map<std::string, std::unordered_map<std::string, Equipo>> equipos;
+    int ultimoContadorIfs;
 public:
     ServicioPartidoTree() {
     }
 
-
+    int getContadorIfs() {
+        return ultimoContadorIfs;
+    }
+    void eliminarPartido(Partido& partido){
+        try {
+            ArbolBinarioAVL<Partido>& arbolPartidos = competiciones.at(partido.getLiga());
+            arbolPartidos.remove(partido);
+        } catch (const std::out_of_range&) {
+            throw std::runtime_error("No se encontraron partidos para la competición.");
+        }
+    }
     void actualizarPartido(const std::string &liga, Partido& partido, Partido& partidoOriginal){
         try {
             ArbolBinarioAVL<Partido>& arbolPartidos = competiciones.at(liga);
@@ -32,28 +43,32 @@ public:
     }
 
     Partido getFechaConMenosGoles(const std::string& equipoNombre, const std::string& competicion) {
+        int contadorIfs = 0;
         try {
             ArbolBinarioAVL<Partido>& arbolPartidos = competiciones.at(competicion);
             std::vector<Partido> partidos = arbolPartidos.inorder();
             std::cout<<partidos.size()<<std::endl;
             for(const Partido& partido : partidos) {
                 if(partido.getEquipoLocal() == equipoNombre || partido.getEquipoVisitante() == equipoNombre) {
+                    ultimoContadorIfs = contadorIfs;
                     return partido;
-                }
+                } contadorIfs+=2;
             }
         } catch (const std::out_of_range&) {
             throw std::runtime_error("No se encontraron partidos para la competición.");
         }
     }
     Partido getFechaConMasGoles(const std::string& equipoNombre, const std::string& competicion) {
+        int contadorIfs=0;
         try {
             ArbolBinarioAVL<Partido>& arbolPartidos = competiciones.at(competicion);
             std::vector<Partido> partidos = arbolPartidos.inorder();
 
             for(int i = partidos.size() - 1; i >= 0; --i) {
                 if(partidos[i].getEquipoLocal() == equipoNombre || partidos[i].getEquipoVisitante() == equipoNombre) {
+                    ultimoContadorIfs = contadorIfs;
                     return partidos[i];
-                }
+                }contadorIfs+=2;
             }
         } catch (const std::out_of_range&) {
             throw std::runtime_error("No se encontraron partidos para la competición.");
@@ -68,6 +83,7 @@ public:
         }
     }
     void actualizarEstadisticasPorCompeticion(Partido& partido) {
+        int contadorIfs = 0;
         std::string liga = partido.getLiga();
 
         // Acceder directamente al equipo local
@@ -81,10 +97,13 @@ public:
 
         equipoLocal.aumentarPartidosJugados(liga);
         if(partido.getGolesLocal() > partido.getGolesVisitante()){
+            contadorIfs++;
             equipoLocal.registrarVictoria(liga);
         } else if(partido.getGolesLocal() < partido.getGolesVisitante()){
+            contadorIfs++;
             equipoLocal.registrarDerrota(liga);
         }
+        ultimoContadorIfs = contadorIfs;
         // Acceder directamente al equipo visitante
         Equipo& equipoVisitante = equipos[liga][partido.getEquipoVisitante()];
 
@@ -127,6 +146,7 @@ public:
     }
 
     ArbolBinarioAVL<Partido> getPartidos(std::string competicion) {
+        ultimoContadorIfs = 0;
         try {
             return competiciones.at(competicion);
         } catch (const std::out_of_range&) {
@@ -134,7 +154,8 @@ public:
         }
     }
 
-    std::pair<Equipo, int> obtenerEquipoConMasGoles() const {
+    std::pair<Equipo, int> obtenerEquipoConMasGoles() {
+        int contadorIfs = 0;
         std::unordered_map<std::string, int> golesPorEquipo;
         Equipo equipoConMasGoles;
         int maxGoles = 0;
@@ -147,13 +168,14 @@ public:
                 if (golesPorEquipo[nombreEquipo] > maxGoles) {
                     maxGoles = golesPorEquipo[nombreEquipo];
                     equipoConMasGoles = equipo;
-                }
+                }contadorIfs++;
             }
         }
-
+        ultimoContadorIfs = contadorIfs;
         return {equipoConMasGoles, maxGoles}; // Retornamos el equipo y sus goles totales
     }
-    std::pair<Equipo, int> obtenerEquipoConMenosGoles() const {
+    std::pair<Equipo, int> obtenerEquipoConMenosGoles() {
+        int contadorIfs = 0;
         std::unordered_map<std::string, int> golesPorEquipo;
         Equipo equipoConMenosGoles;
         int minGoles = 999999;  // Inicializamos con el valor máximo de int
@@ -165,29 +187,34 @@ public:
 
                 // Actualizamos el equipo con menos goles si encontramos uno con menor cantidad de goles
                 if (golesPorEquipo[nombreEquipo] < minGoles) {
+                    contadorIfs++;
                     minGoles = golesPorEquipo[nombreEquipo];
                     equipoConMenosGoles = equipo;
                 }
             }
         }
-
+        ultimoContadorIfs = contadorIfs;
         return {equipoConMenosGoles, minGoles}; // Retornamos el equipo y sus goles totales
     }
     std::vector<Partido> obtenerPartidosEntreEquipos(const std::string& equipo1, const std::string& equipo2) {
+        int contadorIfs = 0;
         std::vector<Partido> partidosEntreEquipos;
         for (auto& [competicion, arbolPartidos] : competiciones) {
             std::vector<Partido> partidos = arbolPartidos.inorder();
             for (const auto& partido : partidos) {
                 if ((partido.getEquipoLocal() == equipo1 && partido.getEquipoVisitante() == equipo2) ||
                     (partido.getEquipoLocal() == equipo2 && partido.getEquipoVisitante() == equipo1)) {
+                    contadorIfs++;
                     partidosEntreEquipos.push_back(partido);
                 }
             }
         }
+        ultimoContadorIfs = contadorIfs;
         return partidosEntreEquipos;
     }
 
-    std::pair<std::string, int> obtenerCompeticionConMasGoles() const {
+    std::pair<std::string, int> obtenerCompeticionConMasGoles() {
+        int contadorIfs = 0;
         std::string competicionConMasGoles;
         int maxGoles = -1;
 
@@ -203,15 +230,17 @@ public:
 
             // Actualizamos si esta competición tiene más goles que las anteriores
             if (totalGolesCompeticion > maxGoles) {
+                contadorIfs++;
                 maxGoles = totalGolesCompeticion;
                 competicionConMasGoles = nombreCompeticion;
             }
         }
-
+        ultimoContadorIfs = contadorIfs;
         return {competicionConMasGoles, maxGoles};
     }
 
-    std::pair<std::string, int> obtenerCompeticionConMenosGoles() const {
+    std::pair<std::string, int> obtenerCompeticionConMenosGoles() {
+        int contadorIfs = 0;
         std::string competicionConMenosGoles;
         int minGoles = 999999;
 
@@ -227,15 +256,17 @@ public:
 
             // Actualizamos si esta competición tiene menos goles que las anteriores
             if (totalGolesCompeticion < minGoles) {
+                contadorIfs++;
                 minGoles = totalGolesCompeticion;
                 competicionConMenosGoles = nombreCompeticion;
             }
         }
-
+        ultimoContadorIfs = contadorIfs;
         return {competicionConMenosGoles, minGoles};
     }
 
-    std::pair<Equipo, int> obtenerEquipoConMasGolesEnCompeticion(const std::string& nombreCompeticion) const {
+    std::pair<Equipo, int> obtenerEquipoConMasGolesEnCompeticion(const std::string& nombreCompeticion) {
+        int contadorIfs = 0;
         Equipo equipoConMasGoles;
         int maxGoles = 0;
 
@@ -247,16 +278,18 @@ public:
                 int goles = stats.golesAFavor;
 
                 if (goles > maxGoles) {
+                    contadorIfs++;
                     maxGoles = goles;
                     equipoConMasGoles = equipo;
                 }
             }
         }
-
+        ultimoContadorIfs = contadorIfs;
         return {equipoConMasGoles, maxGoles}; // Retornamos el equipo y sus goles totales
     }
 
-    std::pair<Equipo, int> obtenerEquipoConMenosGolesEnCompeticion(const std::string& nombreCompeticion) const {
+    std::pair<Equipo, int> obtenerEquipoConMenosGolesEnCompeticion(const std::string& nombreCompeticion) {
+        int contadorIfs = 0;
         Equipo equipoConMenosGoles;
         int minGoles = std::numeric_limits<int>::max(); // Inicializamos con el valor máximo de int
 
@@ -268,15 +301,17 @@ public:
                 int goles = stats.golesAFavor;
 
                 if (goles < minGoles) {
+                    contadorIfs++;
                     minGoles = goles;
                     equipoConMenosGoles = equipo;
                 }
             }
         }
-
+        ultimoContadorIfs = contadorIfs;
         return {equipoConMenosGoles, minGoles}; // Retornamos el equipo y sus goles totales
     }
     std::vector<Partido> getPartidosPorUmbral(int umbral, bool side) {
+        int contadorIfs = 0;
         std::vector<Partido> partidosFiltrados;
 
         // Recorremos el hash de competiciones
@@ -289,6 +324,7 @@ public:
                     // Supongamos que Partido tiene un método que devuelve los goles totales
                     int golesTotales = partidosLista[i].getGolesLocal() + partidosLista[i].getGolesVisitante();
                     if (golesTotales >= umbral) {
+                        contadorIfs++;
                         partidosFiltrados.push_back(partidosLista[i]);
                     }
                     else{
@@ -300,6 +336,7 @@ public:
                     // Supongamos que Partido tiene un método que devuelve los goles totales
                     int golesTotales = partidosLista[i].getGolesLocal() + partidosLista[i].getGolesVisitante();
                     if (golesTotales <= umbral) {
+                        contadorIfs++;
                         partidosFiltrados.push_back(partidosLista[i]);
                     }
                     else{
@@ -309,10 +346,12 @@ public:
             }
 
         }
+        ultimoContadorIfs = contadorIfs;
         return partidosFiltrados;
     }
 
     std::vector<Partido> getPartidosEntreFechas(std::string& equipo, Fecha& fechaInicio, Fecha& fechaFin){
+        int contadorIfs = 0;
         std::vector<Partido> partidosEntreFechas;
         for(auto& [competicion, arbolPartidos] : competiciones) {
             std::vector<Partido> partidos = arbolPartidos.inorder();
@@ -320,10 +359,12 @@ public:
                 if((partido.getEquipoLocal() == equipo || partido.getEquipoVisitante() == equipo) &&
                     ((partido.getFecha() > fechaInicio && partido.getFecha() < fechaFin)
                      || partido.getFecha() == fechaInicio || partido.getFecha() == fechaFin)) {
+                    contadorIfs += 6;
                     partidosEntreFechas.push_back(partido);
                 }
             }
         }
+        ultimoContadorIfs = contadorIfs;
         return partidosEntreFechas;
     }
 };

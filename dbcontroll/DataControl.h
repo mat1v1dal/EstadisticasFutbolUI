@@ -147,6 +147,50 @@ public:
         remove(rutaArchivo.c_str());
         rename("temporal.csv", rutaArchivo.c_str());
     }
+
+    void eliminarPartido(const std::string& rutaArchivo, const Partido& partidoAEliminar) {
+        std::ifstream archivo(rutaArchivo);
+        std::ofstream archivoTemporal("temporal.csv");
+        std::string linea;
+        std::string jornada, fechaStr, equipoLocal, equipoVisitante, golesLocalStr, golesVisitanteStr, competicion;
+
+        if (!archivo.is_open()) {
+            throw std::runtime_error("Error al abrir el archivo: " + rutaArchivo);
+        }
+        if (!archivoTemporal.is_open()) {
+            throw std::runtime_error("Error al abrir el archivo temporal: temporal.csv");
+        }
+
+        // Copiar el encabezado
+        std::getline(archivo, linea);
+        archivoTemporal << linea << "\n";
+
+        while (std::getline(archivo, linea)) {
+            std::stringstream ss(linea);
+            std::getline(ss, jornada, ',');
+            std::getline(ss, fechaStr, ',');
+            std::getline(ss, equipoLocal, ',');
+            std::getline(ss, golesLocalStr, ',');
+            std::getline(ss, golesVisitanteStr, ',');
+            std::getline(ss, equipoVisitante, ',');
+            std::getline(ss, competicion, ',');
+
+            int golesLocal = std::stoi(golesLocalStr);
+            int golesVisitante = std::stoi(golesVisitanteStr);
+
+            if (!(equipoLocal == partidoAEliminar.getEquipoLocal() && equipoVisitante == partidoAEliminar.getEquipoVisitante() &&
+                  golesLocal == partidoAEliminar.getGolesLocal() && golesVisitante == partidoAEliminar.getGolesVisitante() &&
+                  competicion == partidoAEliminar.getLiga() && fechaStr == partidoAEliminar.getFecha().toString())) {
+                archivoTemporal << linea << "\n"; // Copiar la línea si no coincide con el partido a eliminar
+            }
+        }
+
+        archivo.close();
+        archivoTemporal.close();
+
+        remove(rutaArchivo.c_str());
+        rename("temporal.csv", rutaArchivo.c_str());
+    }
 };
 
 #endif

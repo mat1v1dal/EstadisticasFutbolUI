@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->listWidget, &QListWidget::itemSelectionChanged, this, &MainWindow::onItemSelectionChanged);
     connect(ui->editButton, &QPushButton::clicked, this, &MainWindow::on_editarButton_clicked);
+    connect(ui->deleteButton, &QPushButton::clicked, this, &MainWindow::on_eliminarButton_clicked);
     connect(ui->agregarPartidoButton, &QPushButton::clicked, this, &MainWindow::on_agregarButton_clicked);
     connect(ui->top5Button, &QPushButton::clicked, this, [this]() {
         mostrarTop5Partidos(servicioPartido);
@@ -33,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->promedioGolesButton, &QPushButton::clicked, this, [this]() {
         mostrarPromedioGolesPorEquipo(servicioPartido);
     });
+
     connect(ui->victoriasDerrotasButton, &QPushButton::clicked, this, [this]() {
         mostrarVictoriasYDerrotasPorCompeticion(servicioPartido);
     });
@@ -136,6 +138,45 @@ void MainWindow::onItemSelectionChanged() {
     ui->deleteButton->setEnabled(currentItem != nullptr);
 }
 
+void MainWindow::on_eliminarButton_clicked() {
+    QListWidgetItem* currentItem = ui->listWidget->currentItem();
+    if (!currentItem) return;
+
+    // Obtener los datos del partido seleccionado
+    Partido partidoSeleccionado = currentItem->data(Qt::UserRole).value<Partido>();
+    QString mensaje = QString("¿Está seguro de que desea eliminar el siguiente partido?\n\n"
+                              "Jornada: %1\n"
+                              "Liga: %2\n"
+                              "Equipo Local: %3\n"
+                              "Equipo Visitante: %4\n"
+                              "Goles Local: %5\n"
+                              "Goles Visitante: %6\n"
+                              "Fecha: %7")
+                          .arg(QString::fromStdString(partidoSeleccionado.getJornada()))
+                          .arg(QString::fromStdString(partidoSeleccionado.getLiga()))
+                          .arg(QString::fromStdString(partidoSeleccionado.getEquipoLocal()))
+                          .arg(QString::fromStdString(partidoSeleccionado.getEquipoVisitante()))
+                          .arg(partidoSeleccionado.getGolesLocal())
+                          .arg(partidoSeleccionado.getGolesVisitante())
+                          .arg(QString::fromStdString(partidoSeleccionado.getFecha().toString()));
+
+    // Confirmar eliminación
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirmar Eliminación", mensaje,
+                                                              QMessageBox::Yes | QMessageBox::No);
+    if (reply == QMessageBox::Yes) {
+        // Llamar a la función para eliminar el partido de la base de datos
+        DataControl dataControl;
+        dataControl.eliminarPartido(rutaArchivo, partidoSeleccionado);
+        servicioPartido.eliminarPartido(partidoSeleccionado);
+        // Actualizar la interfaz
+        partidos.clear();
+        actualizarVectorDePartidos(rutaArchivo);
+        limpiarListWidget();
+        cargarPartidosEnListWidget();
+        QMessageBox::information(this, "Aviso", "Partido eliminado correctamente");
+    }
+}
+
 void MainWindow::on_editarButton_clicked() {
     QListWidgetItem* currentItem = ui->listWidget->currentItem();
     if (!currentItem) return;
@@ -236,7 +277,7 @@ void MainWindow::on_editarButton_clicked() {
 
 void MainWindow::filtrarPartidosPorUmbral(ServicioPartidoTree& servicio){
     bool ok;
-
+    int contadorIfs = 0;
     int umbral = QInputDialog::getInt(this, "Partidos por umbral", "Umbral de goles:", 0, 0, 100, 1, &ok);
     if (!ok) return;
 
@@ -250,6 +291,7 @@ void MainWindow::filtrarPartidosPorUmbral(ServicioPartidoTree& servicio){
     auto start = std::chrono::high_resolution_clock::now();
 
     std::vector<Partido> partidos = servicio.getPartidosPorUmbral(umbral, porEncima);
+    contadorIfs += servicio.getContadorIfs();
     if (partidos.empty()) {
         QMessageBox::information(this, "Sin resultados", "No se encontraron partidos en la competición ingresada.");
         return;
@@ -276,13 +318,16 @@ void MainWindow::filtrarPartidosPorUmbral(ServicioPartidoTree& servicio){
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
-    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(servicio.getContadorIfs() + contadorIfs));
 
 }
 
 
 void MainWindow::mostrarTop5Partidos(ServicioPartidoTree& servicio){
     bool ok;
+    int contadorIfs = 0;
     QString competicion = QInputDialog::getText(this, "Ingrese Competición", "Competición:", QLineEdit::Normal, "", &ok);
 
     if (!ok || competicion.isEmpty()) {
@@ -329,12 +374,15 @@ void MainWindow::mostrarTop5Partidos(ServicioPartidoTree& servicio){
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
-    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(servicio.getContadorIfs()));
 }
 
 void MainWindow::mostrarGolesTotalesPorEquipo(ServicioPartidoTree& servicio) {
     // Pedir al usuario que ingrese el nombre del equipo
     bool ok;
+    int contadorIfs = 0;
     QString equipoNombre = QInputDialog::getText(this, "Ingrese Nombre del Equipo", "Equipo:", QLineEdit::Normal, "", &ok);
 
     if (!ok || equipoNombre.isEmpty()) {
@@ -362,7 +410,7 @@ void MainWindow::mostrarGolesTotalesPorEquipo(ServicioPartidoTree& servicio) {
                                   .arg(stats.golesAFavor)
                                   .arg(stats.golesEnContra)
                                   .arg(stats.partidosJugados);
-            }
+            } contadorIfs++;
         }
         auto end = std::chrono::high_resolution_clock::now();
         duration = end - start;
@@ -379,12 +427,15 @@ void MainWindow::mostrarGolesTotalesPorEquipo(ServicioPartidoTree& servicio) {
 
 
     // Mostrar el tiempo de ejecución
-    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(servicio.getContadorIfs() + contadorIfs));
 }
 
 void MainWindow::mostrarPromedioGolesPorEquipo(ServicioPartidoTree& servicio) {
     // Solicitar al usuario el nombre del equipo
     bool ok;
+    int contadorIfs = 0;
     QString equipoNombre = QInputDialog::getText(this, "Ingrese Nombre del Equipo", "Equipo:", QLineEdit::Normal, "", &ok);
 
     if (!ok || equipoNombre.isEmpty()) {
@@ -414,7 +465,7 @@ void MainWindow::mostrarPromedioGolesPorEquipo(ServicioPartidoTree& servicio) {
                                   .arg(QString::fromStdString(equipo.getNombre()))
                                   .arg(promedioFavor, 0, 'f', 2)
                                   .arg(promedioContra, 0, 'f', 2);
-            }
+            } contadorIfs++;
         }
         auto end = std::chrono::high_resolution_clock::now();
         duration = end - start;
@@ -431,12 +482,15 @@ void MainWindow::mostrarPromedioGolesPorEquipo(ServicioPartidoTree& servicio) {
 
 
     // Mostrar el tiempo de ejecución
-    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(servicio.getContadorIfs() + contadorIfs));
 }
 
 void MainWindow::mostrarVictoriasYDerrotasPorCompeticion(ServicioPartidoTree& servicio) {
     // Solicitar el nombre del equipo al usuario
     bool ok;
+    int contadorIfs = 0;
     QString equipoNombre = QInputDialog::getText(this, "Ingrese Nombre del Equipo", "Equipo:", QLineEdit::Normal, "", &ok);
 
     if (!ok || equipoNombre.isEmpty()) {
@@ -463,7 +517,7 @@ void MainWindow::mostrarVictoriasYDerrotasPorCompeticion(ServicioPartidoTree& se
                                   .arg(QString::fromStdString(equipo.getNombre()))
                                   .arg(stats.victorias)
                                   .arg(stats.derrotas);
-            }
+            } contadorIfs++;
         }
         auto end = std::chrono::high_resolution_clock::now();
         duration = end - start;
@@ -480,7 +534,9 @@ void MainWindow::mostrarVictoriasYDerrotasPorCompeticion(ServicioPartidoTree& se
 
 
     // Mostrar el tiempo de ejecución
-    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(servicio.getContadorIfs() + contadorIfs));
 }
 
 
@@ -531,13 +587,15 @@ void MainWindow::mostrarFechaConMasYMenosGoles(ServicioPartidoTree& servicio) {
 
 
     // Mostrar el tiempo de ejecución
-    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(servicio.getContadorIfs()));
 }
 
 void MainWindow::mostrarEquiposConMasYMenosGoles(ServicioPartidoTree& servicio) {
     // Solicitar al usuario el nombre de la competición
     QString competicion = QInputDialog::getText(this, "Competición", "Ingrese el nombre de la competición (o déjelo en blanco para todas):");
-
+    int contadorIfs = 0;
     auto start = std::chrono::high_resolution_clock::now();  // Inicio del cronómetro
 
     std::pair<Equipo, int> equipoMasGoles;
@@ -547,7 +605,9 @@ void MainWindow::mostrarEquiposConMasYMenosGoles(ServicioPartidoTree& servicio) 
     if (competicion.isEmpty()) {
         // Si la competición está en blanco, obtener los equipos con más y menos goles en todas las competiciones
         equipoMasGoles = servicio.obtenerEquipoConMasGoles();
+        contadorIfs+=servicio.getContadorIfs();
         equipoMenosGoles = servicio.obtenerEquipoConMenosGoles();
+        contadorIfs+=servicio.getContadorIfs();
     } else {
         // Obtener los equipos con más y menos goles en la competición especificada
         equipoMasGoles = servicio.obtenerEquipoConMasGolesEnCompeticion(competicion.toStdString());
@@ -573,10 +633,12 @@ void MainWindow::mostrarEquiposConMasYMenosGoles(ServicioPartidoTree& servicio) 
                      .arg(QString::fromStdString(equipoMenosGoles.first.getNombre()))
                      .arg(equipoMenosGoles.second);
 
-    resultado += QString("\n\nTiempo transcurrido: %1 segundos").arg(duration.count());
 
     // Mostrar el resultado en un cuadro de diálogo
     QMessageBox::information(this, "Resultados", resultado);
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(contadorIfs));
 }
 
 void MainWindow::compararRendimientoEquipos(ServicioPartidoTree& servicio) {
@@ -633,16 +695,20 @@ void MainWindow::compararRendimientoEquipos(ServicioPartidoTree& servicio) {
     resultado += QString("%1 ganó %2 partidos.\n").arg(equipo2).arg(victoriasEquipo2);
 
     QMessageBox::information(this, "Resultados de la Comparación", resultado);
-    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(servicio.getContadorIfs()));
 
 }
 
 void MainWindow::competicionConMasGoles(ServicioPartidoTree& servicio) {
     auto start = std::chrono::high_resolution_clock::now();  // Inicio del cronómetro
-
+    int contadorIfs = 0;
     // Obtenemos la competición con más goles y la cantidad de goles
     auto [competicionMasGoles, totalGoles] = servicio.obtenerCompeticionConMasGoles();
+    contadorIfs += servicio.getContadorIfs();
     auto[competicionMenosGoles, totalMinGoles] = servicio.obtenerCompeticionConMenosGoles();
+    contadorIfs += servicio.getContadorIfs();
     auto end = std::chrono::high_resolution_clock::now();  // Fin del cronómetro
     std::chrono::duration<double> duration = end - start;
 
@@ -654,7 +720,9 @@ void MainWindow::competicionConMasGoles(ServicioPartidoTree& servicio) {
     resultado += QString("\n\nLa competición con menos goles es: %1 con %2 goles convertidos.")
                      .arg(QString::fromStdString(competicionMenosGoles))
                      .arg(totalMinGoles);
-    resultado += QString("\n\nTiempo transcurrido: %1 segundos").arg(duration.count());
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(contadorIfs));
     QMessageBox::information(this, "Resultados", resultado);
 }
 
@@ -731,7 +799,9 @@ void MainWindow::buscarPartidosEntreFechasButton(ServicioPartidoTree& servicio) 
         item->setData(Qt::UserRole, QVariant::fromValue(partido));
         ui->listWidget->addItem(item);
     }
-    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(servicio.getContadorIfs()));
 
     // Mostrar un mensaje si no se encontraron partidos
     if (partidosEntreFechas.empty()) {

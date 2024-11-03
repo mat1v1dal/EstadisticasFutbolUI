@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>975</width>
+    <width>957</width>
     <height>600</height>
    </rect>
   </property>
@@ -55,12 +55,12 @@
      <rect>
       <x>10</x>
       <y>90</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Goles a favor y en contra</string>
+     <string>Goles a favor y en contra de un equipo</string>
     </property>
    </widget>
    <widget class="QPushButton" name="equipoMasGolesButton">
@@ -68,12 +68,12 @@
      <rect>
       <x>10</x>
       <y>290</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Equipos con mas y menos goles</string>
+     <string>Equipos con mas y menos goles convertidos</string>
     </property>
    </widget>
    <widget class="QPushButton" name="promedioGolesButton">
@@ -81,12 +81,12 @@
      <rect>
       <x>10</x>
       <y>140</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Promedio de goles a favor y encontra</string>
+     <string>Promedio de goles a favor y en contra de un equipo</string>
     </property>
    </widget>
    <widget class="QPushButton" name="victoriasDerrotasButton">
@@ -94,7 +94,7 @@
      <rect>
       <x>10</x>
       <y>190</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
@@ -107,7 +107,7 @@
      <rect>
       <x>10</x>
       <y>240</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
@@ -120,7 +120,7 @@
      <rect>
       <x>10</x>
       <y>40</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
@@ -148,7 +148,7 @@
      </font>
     </property>
     <property name="text">
-     <string>5 partidos con mas cantidad de goles</string>
+     <string>5 partidos con mas cantidad de goles en una liga</string>
     </property>
    </widget>
    <widget class="QPushButton" name="compararDosEquiposButton">
@@ -156,7 +156,7 @@
      <rect>
       <x>10</x>
       <y>340</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
@@ -182,7 +182,7 @@
      <rect>
       <x>10</x>
       <y>390</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
@@ -195,7 +195,7 @@
      <rect>
       <x>10</x>
       <y>440</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
@@ -208,12 +208,12 @@
      <rect>
       <x>10</x>
       <y>490</y>
-      <width>291</width>
+      <width>301</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Mostrar partidos entre fechas</string>
+     <string>Mostrar partidos entre dos fechas</string>
     </property>
    </widget>
    <widget class="QPushButton" name="agregarPartidoButton">
@@ -235,7 +235,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>975</width>
+     <width>957</width>
      <height>21</height>
     </rect>
    </property>

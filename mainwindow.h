@@ -28,6 +28,7 @@ private:
     ServicioPartidoTree servicioPartido;
     std::vector<Partido> partidos;
     void cargarPartidosEnListWidget();
+    void on_eliminarButton_clicked();
     void onItemSelectionChanged();
     void on_editarButton_clicked();
     void limpiarListWidget();
