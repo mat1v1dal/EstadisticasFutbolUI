@@ -86,24 +86,28 @@ void MainWindow::obtenerRutaArchivo(){
 
 void MainWindow::obtenerPartidos(ServicioPartidoTree &servicio, const std::string& rutaArchivo) {
     DataControl dataControl;
-
+    int contadorIfs = 0;
     auto start = std::chrono::high_resolution_clock::now();
     partidos = dataControl.obtenerPartidos(rutaArchivo);
-
+    contadorIfs += servicio.getContadorIfs();
     for(auto& partido : partidos) {
         servicio.registrarEquipo(partido.getLiga(), partido.getEquipoLocalObj());
+        contadorIfs += servicio.getContadorIfs();
         servicio.registrarEquipo(partido.getLiga(), partido.getEquipoVisitanteObj());
+        contadorIfs += servicio.getContadorIfs();
         servicio.actualizarEstadisticasPorCompeticion(partido);
+        contadorIfs += servicio.getContadorIfs();
         servicio.registrarPartidoEnHash(partido);
+        contadorIfs += servicio.getContadorIfs();
     }
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
 
     // Mostrar mensaje de éxito con el tiempo de carga
-    QMessageBox::information(this, "Carga Completa",
-                             QString("Partidos cargados correctamente.\nTiempo de carga: %1 segundos")
-                                 .arg(duration.count()));
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos \nCantidad de if: %2")
+                                                              .arg(duration.count())
+                                                              .arg(contadorIfs));
 }
 
 void MainWindow::cargarPartidosEnListWidget() {
