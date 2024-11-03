@@ -31,6 +31,12 @@ private:
     void onItemSelectionChanged();
     void on_editarButton_clicked();
     void limpiarListWidget();
+    void competicionConMasGoles(ServicioPartidoTree& servicio);
+    void filtrarPartidosPorUmbral(ServicioPartidoTree& servicio);
+    void mostrarEquiposConMasYMenosGoles(ServicioPartidoTree& servicio);
+    void mostrarEquiposConMasYMenosGolesEnCompeticion(ServicioPartidoTree& servicio);
+    void on_agregarButton_clicked();
+    void buscarPartidosEntreFechasButton(ServicioPartidoTree& servicio);
     void mostrarTop5Partidos(ServicioPartidoTree& servicio);
     void mostrarGolesTotalesPorEquipo(ServicioPartidoTree& servicio);
     void mostrarPromedioGolesPorEquipo(ServicioPartidoTree& servicio);

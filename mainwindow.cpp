@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->listWidget, &QListWidget::itemSelectionChanged, this, &MainWindow::onItemSelectionChanged);
     connect(ui->editButton, &QPushButton::clicked, this, &MainWindow::on_editarButton_clicked);
+    connect(ui->agregarPartidoButton, &QPushButton::clicked, this, &MainWindow::on_agregarButton_clicked);
     connect(ui->top5Button, &QPushButton::clicked, this, [this]() {
         mostrarTop5Partidos(servicioPartido);
     });
@@ -35,15 +36,23 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->victoriasDerrotasButton, &QPushButton::clicked, this, [this]() {
         mostrarVictoriasYDerrotasPorCompeticion(servicioPartido);
     });
+    connect(ui->masYmenosGolesButton, &QPushButton::clicked, this, [this]() {
+        competicionConMasGoles(servicioPartido);
+    });
     connect(ui->fechaGolesButton, &QPushButton::clicked, this, [this]() {
         mostrarFechaConMasYMenosGoles(servicioPartido);
     });
+    connect(ui->filtrarUmbralButton, &QPushButton::clicked, this, [this]() {
+        filtrarPartidosPorUmbral(servicioPartido);
+    });
     connect(ui->equipoMasGolesButton, &QPushButton::clicked, this, [this]() {
-        equipoConMasGolesEnTodasLasCompeticiones(servicioPartido);
+        mostrarEquiposConMasYMenosGoles(servicioPartido);
     });
-    connect(ui->equipoMenosGolesButton, &QPushButton::clicked, this, [this]() {
-        equipoConMenosGolesEnTodasLasCompeticiones(servicioPartido);
+    connect(ui->partidosEntreFechasButton, &QPushButton::clicked, this, [this]() {
+        buscarPartidosEntreFechasButton(servicioPartido);
     });
+
+
     connect(ui->compararDosEquiposButton, &QPushButton::clicked, this, [this]() {
         compararRendimientoEquipos(servicioPartido);
     });
@@ -223,6 +232,52 @@ void MainWindow::on_editarButton_clicked() {
     limpiarListWidget();
     cargarPartidosEnListWidget();
     QMessageBox::information(this, "Aviso", QString("Partido editado correctamente"));
+}
+
+void MainWindow::filtrarPartidosPorUmbral(ServicioPartidoTree& servicio){
+    bool ok;
+
+    int umbral = QInputDialog::getInt(this, "Partidos por umbral", "Umbral de goles:", 0, 0, 100, 1, &ok);
+    if (!ok) return;
+
+    QStringList options;
+    options << "Por encima del umbral" << "Por debajo del umbral";
+    QString seleccion = QInputDialog::getItem(this, "Seleccionar opción", "Filtrar partidos:", options, 0, false, &ok);
+
+    if (!ok) return;  // Si el usuario cancela, salimos
+
+    bool porEncima = (seleccion == "Por encima");
+    auto start = std::chrono::high_resolution_clock::now();
+
+    std::vector<Partido> partidos = servicio.getPartidosPorUmbral(umbral, porEncima);
+    if (partidos.empty()) {
+        QMessageBox::information(this, "Sin resultados", "No se encontraron partidos en la competición ingresada.");
+        return;
+    }
+
+    limpiarListWidget();
+
+    for (int i = 0; i <= partidos.size() - 1; ++i) {
+        const auto& partido = partidos[i];
+
+        QString itemText = QString("Jornada: %1 | Liga: %2 | %3 vs %4 | %5 - %6 | Fecha: %7")
+                               .arg(QString::fromStdString(partido.getJornada()))
+                               .arg(QString::fromStdString(partido.getLiga()))
+                               .arg(QString::fromStdString(partido.getEquipoLocal()))
+                               .arg(QString::fromStdString(partido.getEquipoVisitante()))
+                               .arg(partido.getGolesLocal())
+                               .arg(partido.getGolesVisitante())
+                               .arg(QString::fromStdString(partido.getFecha().toString()));  // Suponiendo que Fecha tiene un método toString()
+
+        QListWidgetItem* item = new QListWidgetItem(itemText);
+
+        item->setData(Qt::UserRole, QVariant::fromValue(partido));
+        ui->listWidget->addItem(item);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+
 }
 
 
@@ -479,38 +534,48 @@ void MainWindow::mostrarFechaConMasYMenosGoles(ServicioPartidoTree& servicio) {
     QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
 }
 
-void MainWindow::equipoConMasGolesEnTodasLasCompeticiones(ServicioPartidoTree& servicio) {
+void MainWindow::mostrarEquiposConMasYMenosGoles(ServicioPartidoTree& servicio) {
+    // Solicitar al usuario el nombre de la competición
+    QString competicion = QInputDialog::getText(this, "Competición", "Ingrese el nombre de la competición (o déjelo en blanco para todas):");
+
     auto start = std::chrono::high_resolution_clock::now();  // Inicio del cronómetro
 
-    // Llamamos al servicio para obtener el equipo y la cantidad de goles
-    auto [equipoMasGoles, totalGoles] = servicio.obtenerEquipoConMasGoles();
+    std::pair<Equipo, int> equipoMasGoles;
+    std::pair<Equipo, int> equipoMenosGoles;
 
-    auto end = std::chrono::high_resolution_clock::now();  // Fin del cronómetro
+
+    if (competicion.isEmpty()) {
+        // Si la competición está en blanco, obtener los equipos con más y menos goles en todas las competiciones
+        equipoMasGoles = servicio.obtenerEquipoConMasGoles();
+        equipoMenosGoles = servicio.obtenerEquipoConMenosGoles();
+    } else {
+        // Obtener los equipos con más y menos goles en la competición especificada
+        equipoMasGoles = servicio.obtenerEquipoConMasGolesEnCompeticion(competicion.toStdString());
+        equipoMenosGoles = servicio.obtenerEquipoConMenosGolesEnCompeticion(competicion.toStdString());
+    }
+
+    if(equipoMasGoles.first.getNombre() == "" || equipoMenosGoles.first.getNombre() == ""){
+        QMessageBox::warning(this, "Error", "No se encontro la competicion.");
+        return;
+    }
+    auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
 
-    // Mostrar el resultado incluyendo los goles
-    QString resultado = QString("El equipo con más goles en todas las competiciones es: %1 con %2 goles.")
-                            .arg(QString::fromStdString(equipoMasGoles.getNombre()))
-                            .arg(totalGoles);
+    // Preparar el mensaje a mostrar
+    QString resultado = competicion.isEmpty()
+                            ? "En todas las competiciones:\n\n"
+                            : QString("En la competición %1:\n\n").arg(competicion);
+
+    resultado += QString("Equipo con más goles: %1 con %2 goles.\n"
+                         "Equipo con menos goles: %3 con %4 goles.")
+                     .arg(QString::fromStdString(equipoMasGoles.first.getNombre()))
+                     .arg(equipoMasGoles.second)
+                     .arg(QString::fromStdString(equipoMenosGoles.first.getNombre()))
+                     .arg(equipoMenosGoles.second);
 
     resultado += QString("\n\nTiempo transcurrido: %1 segundos").arg(duration.count());
-    QMessageBox::information(this, "Resultados", resultado);
-}
-void MainWindow::equipoConMenosGolesEnTodasLasCompeticiones(ServicioPartidoTree& servicio) {
-    auto start = std::chrono::high_resolution_clock::now();  // Inicio del cronómetro
 
-    // Llamamos al servicio para obtener el equipo y la cantidad de goles
-    auto [equipoMasGoles, totalGoles] = servicio.obtenerEquipoConMasGoles();
-
-    auto end = std::chrono::high_resolution_clock::now();  // Fin del cronómetro
-    std::chrono::duration<double> duration = end - start;
-
-    // Mostrar el resultado incluyendo los goles
-    QString resultado = QString("El equipo con más goles en todas las competiciones es: %1 con %2 goles.")
-                            .arg(QString::fromStdString(equipoMasGoles.getNombre()))
-                            .arg(totalGoles);
-
-    resultado += QString("\n\nTiempo transcurrido: %1 segundos").arg(duration.count());
+    // Mostrar el resultado en un cuadro de diálogo
     QMessageBox::information(this, "Resultados", resultado);
 }
 
@@ -571,6 +636,185 @@ void MainWindow::compararRendimientoEquipos(ServicioPartidoTree& servicio) {
     QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
 
 }
+
+void MainWindow::competicionConMasGoles(ServicioPartidoTree& servicio) {
+    auto start = std::chrono::high_resolution_clock::now();  // Inicio del cronómetro
+
+    // Obtenemos la competición con más goles y la cantidad de goles
+    auto [competicionMasGoles, totalGoles] = servicio.obtenerCompeticionConMasGoles();
+    auto[competicionMenosGoles, totalMinGoles] = servicio.obtenerCompeticionConMenosGoles();
+    auto end = std::chrono::high_resolution_clock::now();  // Fin del cronómetro
+    std::chrono::duration<double> duration = end - start;
+
+    // Mostrar el resultado en un mensaje
+    QString resultado = QString("La competición con más goles es: %1 con %2 goles convertidos.")
+                            .arg(QString::fromStdString(competicionMasGoles))
+                            .arg(totalGoles);
+
+    resultado += QString("\n\nLa competición con menos goles es: %1 con %2 goles convertidos.")
+                     .arg(QString::fromStdString(competicionMenosGoles))
+                     .arg(totalMinGoles);
+    resultado += QString("\n\nTiempo transcurrido: %1 segundos").arg(duration.count());
+    QMessageBox::information(this, "Resultados", resultado);
+}
+
+void MainWindow::buscarPartidosEntreFechasButton(ServicioPartidoTree& servicio) {
+    // Solicitar el nombre del equipo
+    QString equipo = QInputDialog::getText(this, "Buscar Partidos", "Ingrese el nombre del equipo:");
+    if (equipo.isEmpty()) {
+        QMessageBox::warning(this, "Entrada Vacía", "El campo del equipo no puede estar vacío.");
+        return;
+    }
+
+    // Solicitar la primera fecha (fecha de inicio)
+    QString fechaInicioStr = QInputDialog::getText(this, "Buscar Partidos", "Ingrese la fecha de inicio (DD/MM/AAAA):");
+    if (fechaInicioStr.isEmpty()) {
+        QMessageBox::warning(this, "Entrada Vacía", "La fecha de inicio no puede estar vacía.");
+        return;
+    }
+
+    // Validar y convertir la primera fecha
+    QStringList fechaInicioParts = fechaInicioStr.split('/');
+    bool ok;
+    if (fechaInicioParts.size() != 3 || fechaInicioParts[0].toInt(&ok) < 1 || fechaInicioParts[0].toInt(&ok) > 31 ||
+        fechaInicioParts[1].toInt(&ok) < 1 || fechaInicioParts[1].toInt(&ok) > 12 ||
+        fechaInicioParts[2].toInt(&ok) < 1900) {
+        QMessageBox::warning(this, "Fecha Inválida", "Por favor, ingrese una fecha válida (DD/MM/AAAA) para la fecha de inicio.");
+        return;
+    }
+    Fecha fechaInicio(fechaInicioParts[0].toInt(), fechaInicioParts[1].toInt(), fechaInicioParts[2].toInt());
+
+    // Solicitar la segunda fecha (fecha de fin)
+    QString fechaFinStr = QInputDialog::getText(this, "Buscar Partidos", "Ingrese la fecha de fin (DD/MM/AAAA):");
+    if (fechaFinStr.isEmpty()) {
+        QMessageBox::warning(this, "Entrada Vacía", "La fecha de fin no puede estar vacía.");
+        return;
+    }
+
+    // Validar y convertir la segunda fecha
+    QStringList fechaFinParts = fechaFinStr.split('/');
+    if (fechaFinParts.size() != 3 || fechaFinParts[0].toInt(&ok) < 1 || fechaFinParts[0].toInt(&ok) > 31 ||
+        fechaFinParts[1].toInt(&ok) < 1 || fechaFinParts[1].toInt(&ok) > 12 ||
+        fechaFinParts[2].toInt(&ok) < 1900) {
+        QMessageBox::warning(this, "Fecha Inválida", "Por favor, ingrese una fecha válida (DD/MM/AAAA) para la fecha de fin.");
+        return;
+    }
+    Fecha fechaFin(fechaFinParts[0].toInt(), fechaFinParts[1].toInt(), fechaFinParts[2].toInt());
+
+    // Verificar que la fecha de inicio no sea mayor que la fecha de fin
+    if (fechaInicio > fechaFin) {
+        QMessageBox::warning(this, "Rango de Fechas Inválido", "La fecha de inicio no puede ser mayor que la fecha de fin.");
+        return;
+    }
+
+    // Llamar a la función de servicio para obtener los partidos entre las fechas
+    auto start = std::chrono::high_resolution_clock::now();
+    std::string equipoStr = equipo.toStdString();
+    std::vector<Partido> partidosEntreFechas = servicio.getPartidosEntreFechas(equipoStr, fechaInicio, fechaFin);
+    auto end = std::chrono::high_resolution_clock::now();  // Fin del cronómetro
+    std::chrono::duration<double> duration = end - start;
+    // Limpiar el ListWidget antes de cargar los nuevos resultados
+    ui->listWidget->clear();
+
+    // Mostrar los partidos en el ListWidget
+    for (const auto& partido : partidosEntreFechas) {
+        QString itemText = QString("Jornada: %1 | Liga: %2 | %3 vs %4 | %5 - %6 | Fecha: %7")
+        .arg(QString::fromStdString(partido.getJornada()))
+            .arg(QString::fromStdString(partido.getLiga()))
+            .arg(QString::fromStdString(partido.getEquipoLocal()))
+            .arg(QString::fromStdString(partido.getEquipoVisitante()))
+            .arg(partido.getGolesLocal())
+            .arg(partido.getGolesVisitante())
+            .arg(QString::fromStdString(partido.getFecha().toString()));  // Suponiendo que Fecha tiene un método toString()
+
+        QListWidgetItem* item = new QListWidgetItem(itemText);
+        item->setData(Qt::UserRole, QVariant::fromValue(partido));
+        ui->listWidget->addItem(item);
+    }
+    QMessageBox::information(this, "Tiempo de ejecución", QString("Tiempo transcurrido: %1 segundos").arg(duration.count()));
+
+    // Mostrar un mensaje si no se encontraron partidos
+    if (partidosEntreFechas.empty()) {
+        QMessageBox::information(this, "Sin Resultados", "No se encontraron partidos para los criterios especificados.");
+    }
+}
+
+void MainWindow::on_agregarButton_clicked() {
+    // Solicitar jornada
+    QString jornada = QInputDialog::getText(this, "Agregar Partido", "Jornada:");
+    if (jornada.isEmpty()) {
+        QMessageBox::warning(this, "Entrada Vacía", "El campo de jornada no puede estar vacío.");
+        return;
+    }
+
+    // Solicitar equipo local
+    QString equipoLocal = QInputDialog::getText(this, "Agregar Partido", "Equipo Local:");
+    if (equipoLocal.isEmpty()) {
+        QMessageBox::warning(this, "Entrada Vacía", "El campo de equipo local no puede estar vacío.");
+        return;
+    }
+
+    // Solicitar equipo visitante
+    QString equipoVisitante = QInputDialog::getText(this, "Agregar Partido", "Equipo Visitante:");
+    if (equipoVisitante.isEmpty()) {
+        QMessageBox::warning(this, "Entrada Vacía", "El campo de equipo visitante no puede estar vacío.");
+        return;
+    }
+
+    // Solicitar goles del equipo local
+    bool ok;
+    int golesLocal = QInputDialog::getInt(this, "Agregar Partido", "Goles Local:", 0, 0, 100, 1, &ok);
+    if (!ok) return; // El usuario canceló la entrada
+
+    // Solicitar goles del equipo visitante
+    int golesVisitante = QInputDialog::getInt(this, "Agregar Partido", "Goles Visitante:", 0, 0, 100, 1, &ok);
+    if (!ok) return; // El usuario canceló la entrada
+
+    // Solicitar fecha
+    QString fechaStr = QInputDialog::getText(this, "Agregar Partido", "Fecha (DD/MM/AAAA):");
+    if (fechaStr.isEmpty()) {
+        QMessageBox::warning(this, "Entrada Vacía", "El campo de fecha no puede estar vacío.");
+        return;
+    }
+
+    QStringList fechaParts = fechaStr.split('/');
+    if (fechaParts.size() != 3 || fechaParts[0].toInt(&ok) < 1 || fechaParts[0].toInt(&ok) > 31 ||
+        fechaParts[1].toInt(&ok) < 1 || fechaParts[1].toInt(&ok) > 12 ||
+        fechaParts[2].toInt(&ok) < 1900) {
+        QMessageBox::warning(this, "Fecha Inválida", "Por favor, ingrese una fecha válida (DD/MM/AAAA).");
+        return;
+    }
+
+    int dia = fechaParts[0].toInt();
+    int mes = fechaParts[1].toInt();
+    int anio = fechaParts[2].toInt();
+
+    Fecha fecha(dia, mes, anio); // Crear objeto Fecha
+
+    // Solicitar liga
+    QString liga = QInputDialog::getText(this, "Agregar Partido", "Liga:");
+    if (liga.isEmpty()) {
+        QMessageBox::warning(this, "Entrada Vacía", "El campo de liga no puede estar vacío.");
+        return;
+    }
+
+    // Crear el objeto Partido
+    Partido nuevoPartido(Equipo(equipoLocal.toStdString()), Equipo(equipoVisitante.toStdString()),
+                         golesLocal, golesVisitante, liga.toStdString(), fecha);
+    nuevoPartido.setJornada(jornada.toStdString());
+
+    // Guardar el partido en el archivo CSV
+    DataControl dataControl;
+    dataControl.agregarPartido(rutaArchivo, nuevoPartido, jornada.toStdString());
+
+    partidos.push_back(nuevoPartido);
+    servicioPartido.registrarPartidoEnHash(nuevoPartido);
+    servicioPartido.actualizarEstadisticasPorCompeticion(nuevoPartido);
+    limpiarListWidget();
+    cargarPartidosEnListWidget();
+    QMessageBox::information(this, "Aviso", "Partido agregado correctamente");
+}
+
 
 MainWindow::~MainWindow()
 {

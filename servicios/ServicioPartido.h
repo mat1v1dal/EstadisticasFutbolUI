@@ -153,7 +153,26 @@ public:
 
         return {equipoConMasGoles, maxGoles}; // Retornamos el equipo y sus goles totales
     }
+    std::pair<Equipo, int> obtenerEquipoConMenosGoles() const {
+        std::unordered_map<std::string, int> golesPorEquipo;
+        Equipo equipoConMenosGoles;
+        int minGoles = 999999;  // Inicializamos con el valor máximo de int
 
+        for (const auto& [competicion, equiposEnCompeticion] : equipos) {
+            for (const auto& [nombreEquipo, equipo] : equiposEnCompeticion) {
+                Estadisticas stats = equipo.getEstadisticas(competicion);
+                golesPorEquipo[nombreEquipo] += stats.golesAFavor;
+
+                // Actualizamos el equipo con menos goles si encontramos uno con menor cantidad de goles
+                if (golesPorEquipo[nombreEquipo] < minGoles) {
+                    minGoles = golesPorEquipo[nombreEquipo];
+                    equipoConMenosGoles = equipo;
+                }
+            }
+        }
+
+        return {equipoConMenosGoles, minGoles}; // Retornamos el equipo y sus goles totales
+    }
     std::vector<Partido> obtenerPartidosEntreEquipos(const std::string& equipo1, const std::string& equipo2) {
         std::vector<Partido> partidosEntreEquipos;
         for (auto& [competicion, arbolPartidos] : competiciones) {
@@ -168,6 +187,145 @@ public:
         return partidosEntreEquipos;
     }
 
+    std::pair<std::string, int> obtenerCompeticionConMasGoles() const {
+        std::string competicionConMasGoles;
+        int maxGoles = -1;
+
+        // Iteramos sobre cada competición y sumamos los goles de sus equipos
+        for (const auto& [nombreCompeticion, equiposEnCompeticion] : equipos) {
+            int totalGolesCompeticion = 0;
+
+            // Sumar los goles de cada equipo en la competición actual
+            for (const auto& [nombreEquipo, equipo] : equiposEnCompeticion) {
+                Estadisticas stats = equipo.getEstadisticas(nombreCompeticion);
+                totalGolesCompeticion += stats.golesAFavor;
+            }
+
+            // Actualizamos si esta competición tiene más goles que las anteriores
+            if (totalGolesCompeticion > maxGoles) {
+                maxGoles = totalGolesCompeticion;
+                competicionConMasGoles = nombreCompeticion;
+            }
+        }
+
+        return {competicionConMasGoles, maxGoles};
+    }
+
+    std::pair<std::string, int> obtenerCompeticionConMenosGoles() const {
+        std::string competicionConMenosGoles;
+        int minGoles = 999999;
+
+        // Iteramos sobre cada competición y sumamos los goles de sus equipos
+        for (const auto& [nombreCompeticion, equiposEnCompeticion] : equipos) {
+            int totalGolesCompeticion = 0;
+
+            // Sumar los goles de cada equipo en la competición actual
+            for (const auto& [nombreEquipo, equipo] : equiposEnCompeticion) {
+                Estadisticas stats = equipo.getEstadisticas(nombreCompeticion);
+                totalGolesCompeticion += stats.golesAFavor;
+            }
+
+            // Actualizamos si esta competición tiene menos goles que las anteriores
+            if (totalGolesCompeticion < minGoles) {
+                minGoles = totalGolesCompeticion;
+                competicionConMenosGoles = nombreCompeticion;
+            }
+        }
+
+        return {competicionConMenosGoles, minGoles};
+    }
+
+    std::pair<Equipo, int> obtenerEquipoConMasGolesEnCompeticion(const std::string& nombreCompeticion) const {
+        Equipo equipoConMasGoles;
+        int maxGoles = 0;
+
+        // Verificamos si la competición ingresada existe en el mapa
+        auto it = equipos.find(nombreCompeticion);
+        if (it != equipos.end()) {
+            for (const auto& [nombreEquipo, equipo] : it->second) {
+                Estadisticas stats = equipo.getEstadisticas(nombreCompeticion);
+                int goles = stats.golesAFavor;
+
+                if (goles > maxGoles) {
+                    maxGoles = goles;
+                    equipoConMasGoles = equipo;
+                }
+            }
+        }
+
+        return {equipoConMasGoles, maxGoles}; // Retornamos el equipo y sus goles totales
+    }
+
+    std::pair<Equipo, int> obtenerEquipoConMenosGolesEnCompeticion(const std::string& nombreCompeticion) const {
+        Equipo equipoConMenosGoles;
+        int minGoles = std::numeric_limits<int>::max(); // Inicializamos con el valor máximo de int
+
+        // Verificamos si la competición ingresada existe en el mapa
+        auto it = equipos.find(nombreCompeticion);
+        if (it != equipos.end()) {
+            for (const auto& [nombreEquipo, equipo] : it->second) {
+                Estadisticas stats = equipo.getEstadisticas(nombreCompeticion);
+                int goles = stats.golesAFavor;
+
+                if (goles < minGoles) {
+                    minGoles = goles;
+                    equipoConMenosGoles = equipo;
+                }
+            }
+        }
+
+        return {equipoConMenosGoles, minGoles}; // Retornamos el equipo y sus goles totales
+    }
+    std::vector<Partido> getPartidosPorUmbral(int umbral, bool side) {
+        std::vector<Partido> partidosFiltrados;
+
+        // Recorremos el hash de competiciones
+        for (const auto& [competicion, arbolPartidos] : competiciones) {
+            // Obtener los partidos en orden
+            std::vector<Partido> partidosLista =  competiciones[competicion].inorder();
+            // Filtramos según el umbral
+            if(side){
+                for (int i = partidosLista.size() - 1; i >= 0; --i) {
+                    // Supongamos que Partido tiene un método que devuelve los goles totales
+                    int golesTotales = partidosLista[i].getGolesLocal() + partidosLista[i].getGolesVisitante();
+                    if (golesTotales >= umbral) {
+                        partidosFiltrados.push_back(partidosLista[i]);
+                    }
+                    else{
+                        break;
+                    }
+                }
+            } else {
+                for (int i = 0; i < partidosLista.size(); ++i) {
+                    // Supongamos que Partido tiene un método que devuelve los goles totales
+                    int golesTotales = partidosLista[i].getGolesLocal() + partidosLista[i].getGolesVisitante();
+                    if (golesTotales <= umbral) {
+                        partidosFiltrados.push_back(partidosLista[i]);
+                    }
+                    else{
+                        break;
+                    }
+                }
+            }
+
+        }
+        return partidosFiltrados;
+    }
+
+    std::vector<Partido> getPartidosEntreFechas(std::string& equipo, Fecha& fechaInicio, Fecha& fechaFin){
+        std::vector<Partido> partidosEntreFechas;
+        for(auto& [competicion, arbolPartidos] : competiciones) {
+            std::vector<Partido> partidos = arbolPartidos.inorder();
+            for(const Partido& partido : partidos) {
+                if((partido.getEquipoLocal() == equipo || partido.getEquipoVisitante() == equipo) &&
+                    ((partido.getFecha() > fechaInicio && partido.getFecha() < fechaFin)
+                     || partido.getFecha() == fechaInicio || partido.getFecha() == fechaFin)) {
+                    partidosEntreFechas.push_back(partido);
+                }
+            }
+        }
+        return partidosEntreFechas;
+    }
 };
 
 #endif
